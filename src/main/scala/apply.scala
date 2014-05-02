@@ -9,12 +9,12 @@ object Apply extends Launch {
       homedir(("bin" / "%s.bat") format name)
     } getOrElse { homedir("bin" / name) }
 
-  def exec(script: String) = {
+  def exec(script: String): Int = {
     scala.sys.process.Process(windows.map { _ =>
       """cmd /c "%s" --version"""
     }.getOrElse {
       "%s --version"
-    }.format(script))!
+    }.format(script)).!
   }
 
   def config(user: String, repo: String, name: String, launch: Launchconfig, shouldExec: Boolean) = {

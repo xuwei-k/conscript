@@ -3,6 +3,9 @@ package conscript
 import dispatch._
 import java.io.{FileOutputStream, File}
 import util.control.Exception._
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
 
 trait Launch extends Credentials {
   import Conscript.http
@@ -22,18 +25,21 @@ trait Launch extends Credentials {
 
         val req = url("http://typesafe.artifactoryonline.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/%s/sbt-launch.jar" format sbtversion)
 
-        http(req > as.File(jar))()
-        windows map { _ =>
-          if (launchalias.exists) launchalias.delete
-          else ()
-          // should copy the one we already downloaded, but I don't
-          // have a windows box to test any changes
-          http(req > as.File(launchalias))()
-        } getOrElse {
-          val rt = Runtime.getRuntime
-          rt.exec("ln -sf %s %s" format (jar, launchalias)).waitFor
-        }
-        Right("Fetching Conscript...")
+        val future = for {
+          _ <- http(req > as.File(jar))
+          _ <- windows.map { _ =>
+            if (launchalias.exists) launchalias.delete
+            else ()
+            // should copy the one we already downloaded, but I don't
+            // have a windows box to test any changes
+            http(req > as.File(launchalias))
+          } getOrElse {
+            val rt = Runtime.getRuntime
+            Future.successful(rt.exec("ln -sf %s %s" format (jar, launchalias)).waitFor)
+          }
+        } yield Right("Fetching Conscript...")
+
+        Await.result(future, 30.seconds)
       } catch {
         case e: Exception => 
           Left("Error downloading sbt-launch-%s: %s".format(
