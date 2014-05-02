@@ -1,10 +1,12 @@
 package conscript
 
 import dispatch._
-import net.liftweb.json.JsonAST._
+import org.json4s.JsonAST._
 import java.io.File
 import com.ning.http.client.{RequestBuilder=>Req}
 import com.ning.http.client.ProxyServer
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Promise
 
 object Github extends Credentials {
   import Conscript.http

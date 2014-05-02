@@ -1,8 +1,10 @@
 package conscript
 
 import dispatch._
-import net.liftweb.json._
-import net.liftweb.json.JsonDSL._
+import org.json4s._
+import org.json4s.JsonDSL._
+import org.json4s.native.{renderJValue, compactJson}
+import scala.concurrent.Promise
 
 object Authorize {
   def auths = :/("api.github.com").secure.POST / "authorizations"
@@ -21,7 +23,7 @@ object Authorize {
   import Conscript.http
   def apply(user: String, pass: String): Promise[Either[String, String]] =
     http(
-        as_!(auths, user, pass).setBody(compact(render(
+        as_!(auths, user, pass).setBody(compactJson(renderJValue(
           ("note" -> "Conscript") ~
           ("note_url" -> "https://github.com/n8han/conscript") ~
           ("scopes" -> ("repo" :: Nil))
