@@ -8,17 +8,15 @@ version := "0.4.4"
 
 name := "conscript"
 
-scalaVersion := "2.9.2"
+scalaVersion := "2.10.4"
 
-libraryDependencies <<= (libraryDependencies, scalaVersion, sbtVersion) {
-  (deps, sv, sbtv) => deps ++ Seq(
-    "net.databinder.dispatch" %% "dispatch-core" % "0.9.5",
-    "com.github.scopt" %% "scopt" % "2.1.0",
-    "org.scala-lang" % "scala-swing" % sv,
-    "net.liftweb" %% "lift-json" % "2.5",
-    "org.slf4j" % "slf4j-jdk14" % "1.6.2"
-  )
-}
+libraryDependencies ++= Seq(
+  "net.databinder.dispatch" %% "dispatch-core" % "0.9.5",
+  "com.github.scopt" %% "scopt" % "3.2.0",
+  "org.scala-lang" % "scala-swing" % scalaVersion.value,
+  "net.liftweb" %% "lift-json" % "2.5",
+  "org.slf4j" % "slf4j-jdk14" % "1.6.2"
+)
 
 proguardSettings
 
