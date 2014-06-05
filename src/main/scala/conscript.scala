@@ -2,6 +2,8 @@ package conscript
 
 import scala.util.control.Exception.allCatch
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+import scala.concurrent.Await
 
 object Conscript {
   import dispatch._
@@ -62,7 +64,7 @@ object Conscript {
     }
     val parsed = parser.parse(args, new Config())
     val display =
-      if (config.setup)
+      if (parsed.exists(_.setup))
         allCatch.opt {
           SplashDisplay
         }.getOrElse(ConsoleDisplay)
@@ -77,7 +79,7 @@ object Conscript {
         Right(parser.usage)
       case c if !c.auth.isEmpty =>
         c.auth.get.split(":",2) match {
-          case Array(name, pass) => Authorize(name, pass)
+          case Array(name, pass) => Await.result(Authorize(name, pass), 30.seconds)
           case _ => Left("-a / --auth requires <name>:<pass>")
         }
       case c if c.setup =>
@@ -125,20 +127,27 @@ object Conscript {
                 repo: String,
                 shouldExec: Boolean,
                 branch: Option[String] = None,
-                configoverrides: Seq[ConfigEntry] = Nil) =
-    Github.lookup(user, repo, branch).map { result =>
-      result.right.flatMap { scripts =>
-        ((Right(""): Either[String,String]) /: scripts) {
-          case (either, (name, launch)) =>
-            either.right.flatMap { cur =>
-              val modLaunch = (launch /: configoverrides) {_ update _}
-              Apply.config(user, repo, name, modLaunch, shouldExec).right.map {
-                cur + "\n" +  _
-              }
+                configoverrides: Seq[ConfigEntry] = Nil) = {
+    val future = Github.lookup(user, repo, branch).map {
+      result =>
+        result.right.flatMap {
+          scripts =>
+            ((Right(""): Either[String, String]) /: scripts) {
+              case (either, (name, launch)) =>
+                either.right.flatMap {
+                  cur =>
+                    val modLaunch = (launch /: configoverrides) {
+                      _ update _
+                    }
+                    Apply.config(user, repo, name, modLaunch, shouldExec).right.map {
+                      cur + "\n" + _
+                    }
+                }
             }
-          }
-      }
-    }()
+        }
+    }
+    Await.result(future, 30.seconds)
+  }
   val GhProject = "([^/]+)/([^/]+)(/[^/]+)?".r
 }
 
