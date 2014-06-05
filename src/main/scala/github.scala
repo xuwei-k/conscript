@@ -25,7 +25,8 @@ object Github extends Credentials {
       base / "git" / "refs" / "heads" / ref OK LiftJson.As
     ).either.right.map { js =>
       for {
-        JField("object", JObject(obj)) <- js
+        JObject(fields) <- js
+        JField("object", JObject(obj)) <- fields
         JField("sha", JString(sha)) <- obj
       } yield sha
     }.left.map {
@@ -38,7 +39,8 @@ object Github extends Credentials {
     ) OK LiftJson.As).either.left.map(unknownError).map { eth =>
       eth.right.flatMap { js =>
         (for {
-          JField("tree", JArray(ary)) <- js
+          JObject(fields) <- js
+          JField("tree", JArray(ary)) <- fields
           JObject(obj) <- ary
           JField("path", JString(name)) <- obj
           JField("sha", JString(hash)) <- obj
@@ -50,7 +52,7 @@ object Github extends Credentials {
       }
     }
   def guaranteed[L, R](value: R) =
-    Future((Right(value): Either[L, R]))
+    Future(Right(value): Either[L, R])
   def refname(given: Option[String], base: Req) =
     given match {
         case Some(branch) => guaranteed[String, String](branch).right

@@ -22,7 +22,10 @@ object Authorize {
       case StatusCode(401) => "Unrecognized github login and password"
       case e => "Unexpected error: " + e.getMessage
     }.map { _.right.flatMap { js =>
-      (for (JField("token", JString(token)) <- js) yield {
+      (for {
+        JObject(fields) <- js
+        JField("token", JString(token)) <- fields
+      } yield {
         Config.properties {
           _.setProperty("gh.access", token)
         }
