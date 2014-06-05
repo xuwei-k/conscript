@@ -3,26 +3,18 @@ package conscript
 import scala.util.control.Exception.{catching,allCatch}
 import java.io.File
 
-object TRY{
-  def apply[A](a: => A) = try{
-    a
-  } catch {
-    case e => e.printStackTrace; throw e
-  }
-}
-
 object Apply extends Launch {
 
   def scriptFile(name: String) = windows map { _ =>
       homedir(("bin" / "%s.bat") format name)
     } getOrElse { homedir("bin" / name) }
 
-  def exec(script: String): String = {
+  def exec(script: String): Int = {
     scala.sys.process.Process(windows.map { _ =>
       """cmd /c "%s" --version"""
     }.getOrElse {
       "%s --version"
-    }.format(script)).lineStream.mkString(" ")
+    }.format(script)).!
   }
 
   def config(user: String, repo: String, name: String, launch: Launchconfig, shouldExec: Boolean) = {
@@ -32,7 +24,7 @@ object Apply extends Launch {
     write(launchconfig, (launch update ConfigBootDir(forceslash(bootdir.toString))).toString).orElse {
       write(place, script(launchconfig)) orElse {
         allCatch.opt {
-        TRY(  place.setExecutable(true))
+          place.setExecutable(true)
         }.filter { _ == true } match {
           case None => Some("Unable set as executable: " + place)
           case _ => None
@@ -40,7 +32,7 @@ object Apply extends Launch {
       }
     }.toLeft {
       allCatch.opt {
-        TRY(if (shouldExec) exec(place.toString))
+        if (shouldExec) exec(place.toString)
       } // ignore result status; the app might not have `--version`
       "Conscripted %s/%s to %s".format(user, repo, place)  
     }

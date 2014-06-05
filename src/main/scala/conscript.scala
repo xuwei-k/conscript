@@ -6,7 +6,6 @@ import scala.concurrent.duration._
 import scala.concurrent.Await
 
 object Conscript {
-  import dispatch._
   import Apply.exec
   val http = dispatch.Http
 
@@ -58,16 +57,15 @@ object Conscript {
       opt[Unit]("no-exec").text("don't execute program after install").action(
         (_, c) => c.copy(shouldExec = false)
       )
-      opt[String]("[<user>/<project>[/<version>]]").text("github project").action(
+      arg[String]("[<user>/<project>[/<version>]]").optional.text("github project").action(
         (p, c) => c.copy(project = p)
       )
     }
     val parsed = parser.parse(args, new Config())
-    println(parsed)
     val display =
       if (parsed.exists(_.setup))
         allCatch.opt {
-        TRY(  SplashDisplay )
+          SplashDisplay
         }.getOrElse(ConsoleDisplay)
       else ConsoleDisplay
 
@@ -97,7 +95,7 @@ object Conscript {
           }
         }
       case Config(GhProject(user, repo, version), branch, _, _, _, shouldExec, entries, _) =>
-        configure(user, repo, shouldExec, branch, entries ++ (Option(version) map { v => ConfigVersion(v) }).toSeq)
+        configure(user, repo, shouldExec, branch, entries ++ (Option(version).map { v => ConfigVersion(v) }).toSeq)
       case _ => Left(parser.usage)
     }.getOrElse { Left(parser.usage) }.fold( { err =>
       display.error(err)
@@ -111,20 +109,18 @@ object Conscript {
   }
 
   def examine(scr: String): Either[String,String] = {
-    try {
-      println("scr " + scr)
-      Right(exec(scr))
-    }catch{
-      case e => e.printStackTrace;
-      val pathed = Apply.scriptFile(scr).toString
-      println("pathed " + pathed)
-      try {
-        Right(exec(pathed))
-      }catch {
-        case e => e.printStackTrace;
-          Left(e.toString)
-      }
-    }            
+    allCatch.opt { exec(scr) } match {
+      case Some(0) =>
+        Right("Success!\n%s is at your command.".format(scr))
+      case _ =>
+        val pathed = Apply.scriptFile(scr).toString
+        allCatch.opt { exec(pathed) } match {
+          case Some(0) =>
+            Right("Installed: %s\nMay not be on executable PATH".format(pathed))
+          case _ =>
+            Left("Installed: %s\nError reported; run from terminal for details.".format(pathed))
+        }
+    }
   }
 
   def configure(user: String,
@@ -152,7 +148,7 @@ object Conscript {
     }
     Await.result(future, 30.seconds)
   }
-  val GhProject = "([^/]+)/([^/]+)(/[^/]+)?".r
+  private val GhProject = "([^/]+)/([^/]+)(/[^/]+)?".r
 }
 
 /** The launched conscript entry point */
