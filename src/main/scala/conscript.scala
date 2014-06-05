@@ -63,6 +63,7 @@ object Conscript {
       )
     }
     val parsed = parser.parse(args, new Config())
+    println(parsed)
     val display =
       if (parsed.exists(_.setup))
         allCatch.opt {
@@ -85,9 +86,10 @@ object Conscript {
       case c if c.setup =>
         Apply.launchJar(display).right flatMap { msg =>
           display.info(msg)
-          configure("n8han",
+          configure("xuwei-k",
                     "conscript",
                     true,
+                    branch = Some("scala-2.11"),
                     configoverrides = Seq(ConfigVersion(BuildInfo.version))
           ).right.flatMap { msg =>
             display.info(msg)
@@ -109,17 +111,17 @@ object Conscript {
   }
 
   def examine(scr: String): Either[String,String] = {
-    allCatch.opt { exec(scr) } match {
-      case Some(0) =>
-        Right("Success!\n%s is at your command.".format(scr))
-      case _ =>
-        val pathed = Apply.scriptFile(scr).toString
-        allCatch.opt { exec(pathed) } match {
-          case Some(0) =>
-            Right("Installed: %s\nMay not be on executable PATH".format(pathed))
-          case _ =>
-            Left("Installed: %s\nError reported; run from terminal for details.".format(pathed))
-        }
+    try {
+      Right(exec(scr))
+    }catch{
+      case e => e.printStackTrace;
+      val pathed = Apply.scriptFile(scr).toString
+      try {
+        Right(exec(pathed))
+      }catch {
+        case e => e.printStackTrace;
+          Left(e.toString)
+      }
     }            
   }
 
