@@ -11,3 +11,5 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.2")
 resolvers ++= Seq(
   "less is" at "http://repo.lessis.me",
   "coda" at "http://repo.codahale.com")
+
+scalacOptions ++= Seq("-deprecation")

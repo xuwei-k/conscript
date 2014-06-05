@@ -1,10 +1,10 @@
-seq(conscriptSettings :_*)
+conscriptSettings
 
-seq(lsSettings :_*)
+lsSettings
 
 organization := "net.databinder.conscript"
 
-version := "0.4.4"
+version := "0.4.5-SNAPSHOT"
 
 name := "conscript"
 
@@ -50,7 +50,7 @@ ProguardKeys.outputs in Proguard <<=
     op / ("conscript-" + v + ".jar") :: Nil
   }
 
-seq(buildInfoSettings: _*)
+buildInfoSettings
 
 sourceGenerators in Compile <+= buildInfo
 
