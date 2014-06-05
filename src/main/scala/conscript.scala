@@ -67,7 +67,7 @@ object Conscript {
     val display =
       if (parsed.exists(_.setup))
         allCatch.opt {
-          SplashDisplay
+        TRY(  SplashDisplay )
         }.getOrElse(ConsoleDisplay)
       else ConsoleDisplay
 
@@ -90,7 +90,7 @@ object Conscript {
                     "conscript",
                     true,
                     branch = Some("scala-2.11"),
-                    configoverrides = Seq(ConfigVersion(BuildInfo.version))
+                    configoverrides = Seq(ConfigVersion(conscript.BuildInfo.version))
           ).right.flatMap { msg =>
             display.info(msg)
             examine("cs")
@@ -112,10 +112,12 @@ object Conscript {
 
   def examine(scr: String): Either[String,String] = {
     try {
+      println("scr " + scr)
       Right(exec(scr))
     }catch{
       case e => e.printStackTrace;
       val pathed = Apply.scriptFile(scr).toString
+      println("pathed " + pathed)
       try {
         Right(exec(pathed))
       }catch {

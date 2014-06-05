@@ -68,7 +68,7 @@ object Github extends Credentials {
       eth.right.flatMap { js =>
         (for{
           JObject(obj) <- js
-          ("master_branch", JString(branch)) <- obj
+          ("default_branch", JString(branch)) <- obj
         } yield branch) match {
           case Seq() => Left("Default master branch not found on github")
           case seq => Right(seq.head)

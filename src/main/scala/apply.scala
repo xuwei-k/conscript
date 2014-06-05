@@ -3,6 +3,14 @@ package conscript
 import scala.util.control.Exception.{catching,allCatch}
 import java.io.File
 
+object TRY{
+  def apply[A](a: => A) = try{
+    a
+  } catch {
+    case e => e.printStackTrace; throw e
+  }
+}
+
 object Apply extends Launch {
 
   def scriptFile(name: String) = windows map { _ =>
@@ -24,7 +32,7 @@ object Apply extends Launch {
     write(launchconfig, (launch update ConfigBootDir(forceslash(bootdir.toString))).toString).orElse {
       write(place, script(launchconfig)) orElse {
         allCatch.opt {
-          place.setExecutable(true)
+        TRY(  place.setExecutable(true))
         }.filter { _ == true } match {
           case None => Some("Unable set as executable: " + place)
           case _ => None
@@ -32,7 +40,7 @@ object Apply extends Launch {
       }
     }.toLeft {
       allCatch.opt {
-        if (shouldExec) exec(place.toString)
+        TRY(if (shouldExec) exec(place.toString))
       } // ignore result status; the app might not have `--version`
       "Conscripted %s/%s to %s".format(user, repo, place)  
     }
