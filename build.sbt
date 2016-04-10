@@ -1,5 +1,11 @@
 import Dependencies._
 
+val unusedWarnings = (
+  "-Ywarn-unused" ::
+  "-Ywarn-unused-import" ::
+  Nil
+)
+
 lazy val root = (project in file(".")).
   settings(
     inThisBuild(List(
@@ -18,6 +24,16 @@ lazy val root = (project in file(".")).
       ),
       scmInfo := Some(ScmInfo(url("https://github.com/foundweekends/conscript"), "git@github.com:foundweekends/conscript.git"))
     )),
+    scalacOptions ++= (
+      "-deprecation" ::
+      "-unchecked" ::
+      "-Xlint" ::
+      "-language:existentials" ::
+      "-language:higherKinds" ::
+      "-language:implicitConversions" ::
+      "-Yno-adapted-args" ::
+      Nil
+    ) ::: unusedWarnings,
     name := "conscript",
     libraryDependencies ++= List(launcherInterface, scalaSwing, dispatchCore, scopt, liftJson, slf4jJdk14),
     bintrayPackage := (bintrayPackage in ThisBuild).value,
@@ -67,4 +83,8 @@ lazy val root = (project in file(".")).
     buildInfoPackage := "conscript",
     publishMavenStyle := true,
     publishArtifact in Test := false
+  ).settings(
+    Seq(Compile, Test).flatMap(c =>
+      scalacOptions in (c, console) ~= {_.filterNot(unusedWarnings.toSet)}
+    )
   ).enablePlugins(BuildInfoPlugin)
