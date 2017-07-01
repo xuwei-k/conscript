@@ -5,6 +5,8 @@ import com.typesafe.sbt.git.GitRunner
 
 lazy val pushSiteIfChanged = taskKey[Unit]("push the site if changed")
 
+val unusedWarnings = Seq("-Ywarn-unused-import", "-Ywarn-unused")
+
 lazy val root = (project in file(".")).
   enablePlugins(BuildInfoPlugin, CrossPerProjectPlugin, PamfletPlugin).
   settings(
@@ -19,6 +21,11 @@ lazy val root = (project in file(".")).
       bintrayPackage := "conscript",
       licenses := Seq("LGPL-3.0" -> url("http://www.gnu.org/licenses/lgpl.txt")),
       scalacOptions ++= Seq("-language:_", "-deprecation", "-Xlint", "-Xfuture"),
+      scalacOptions ++= PartialFunction.condOpt(CrossVersion.partialVersion(scalaVersion.value)){
+        case Some((2, v)) if v >= 11 => unusedWarnings
+      }.toList.flatten,
+      scalacOptions in (Compile, console) --= unusedWarnings,
+      scalacOptions in (Test, console) --= unusedWarnings,
       developers := List(
         Developer("n8han", "Nathan Hamblen", "@n8han", url("http://github.com/n8han")),
         Developer("eed3si9n", "Eugene Yokota", "@eed3si9n", url("https://github.com/eed3si9n"))

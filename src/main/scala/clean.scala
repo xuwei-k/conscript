@@ -5,8 +5,6 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import scala.util.control.Exception._
 import scala.util.Random
-import java.util.regex.Pattern
-import scala.util.matching.Regex
 
 object Clean extends OsDetect {
 
