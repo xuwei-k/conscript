@@ -15,6 +15,7 @@ object Conscript {
                     branch: Option[String] = None,
                     clean_boot: Boolean = false,
                     setup: Boolean = false,
+                    gui: Boolean = true,
                     usage: Boolean = false,
                     shouldExec: Boolean = true,
                     entries: Seq[ConfigEntry] = Nil,
@@ -24,11 +25,15 @@ object Conscript {
   /** This is the entrypoint for the runnable jar, as well as
    * the sbt `run` action when in the conscript project. */
   def main(args: Array[String]): Unit = {
-    val exit = run(args match {
-      case Array() => Array("--setup")
-      case _ => args
-    })
-    // not using exit value here, to leave any swing window open
+    args match {
+      case Array() =>
+        // don't call System.exit here, to leave any swing window open
+        run(Array("--setup"))
+      case Array(a @ "--no-gui") =>
+        System.exit(run(Array("--setup", a)))
+      case _ =>
+        run(args)
+    }
   }
 
   /** Shared by the launched version and the runnable version */
@@ -44,6 +49,9 @@ object Conscript {
       }
       opt[String]('b', "branch").text("github branch (default: master)") action { (b, config) =>
         config.copy(branch = Some(b))
+      }
+      opt[Unit]("no-gui").text("don't launch GUI installer") action { (s, config) =>
+        config.copy(gui = false)
       }
       opt[String]('a', "auth").text("obtain oauth token with <name>:<password>") action { (b, config) =>
         config.copy(auth = Some(b))
@@ -67,7 +75,7 @@ object Conscript {
     val parsed = parser.parse(args, Config())
     val display =
       parsed match {
-        case Some(config) if config.setup =>
+        case Some(config) if config.setup && config.gui =>
           try {
             SplashDisplay
           } catch {
@@ -101,7 +109,7 @@ object Conscript {
             examine("cs")
           }
         }
-      case Config(GhProject(user, repo, version), branch, _, _, _, shouldExec, entries, _) =>
+      case Config(GhProject(user, repo, version), branch, _, _, _, _, shouldExec, entries, _) =>
         configure(user, repo, shouldExec, branch, entries ++ (Option(version) map { v => ConfigVersion(v) }).toSeq)
       case _ => Left(parser.usage)
     }.getOrElse { Left(parser.usage) }.fold( { err =>

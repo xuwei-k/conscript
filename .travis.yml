@@ -6,7 +6,11 @@ env:
     secure: TSTItMYGCn50C5QqBXCvDZJ5HxmUqT1UZ2pwyVrZU/JzWn3zftSMtsVnjX6RVWSMGZIFC+b9u08aJFcDt03zQpMjD9WmglebO5RIufxc2Tbk6wBevVDYduKaNoTD2J2U6JOs1Ff8QP6q7vNdBfUBN7exaaF4MCw0GsanqriQIeA=
 
 script:
-- sbt test "project plugin" "^ scripted"
+- sbt test "proguard:proguard" publishLocal "project plugin" "^ scripted"
+- java -Xmx4G -jar target/scala-2.11/proguard/conscript-0.5.2-SNAPSHOT.jar --no-gui
+- ! which g8
+- cs foundweekends/giter8
+- which g8
 
 after_success:
 - test $TRAVIS_PULL_REQUEST == "false" && test $TRAVIS_BRANCH == "master" && sbt pushSiteIfChanged
