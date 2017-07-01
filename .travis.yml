@@ -8,6 +8,7 @@ env:
 script:
 - sbt test "proguard:proguard" publishLocal "project plugin" "^ scripted"
 - java -Xmx4G -jar target/scala-2.11/proguard/conscript-0.5.2-SNAPSHOT.jar --no-gui
+- export PATH=${PATH}:${HOME}/.conscript/bin
 - ! which g8
 - cs foundweekends/giter8
 - which g8
